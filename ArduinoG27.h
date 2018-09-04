@@ -201,6 +201,8 @@ public:
 		_Usb.Init();
 
 	}
+	
+	bool Ready() { _Usb.Task(); return (_G27_data.VendorDefinedData & AC_POWER_ON); }
 
 	void Task() { _Usb.Task(); }
 
