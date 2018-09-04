@@ -77,6 +77,13 @@ private:
 	uint8_t _HorizontalShifterChangeThreshold = 0xFF;
 	uint8_t _VerticalShifterChangeThreshold = 0xFF;
 	bool _UsingManualGearShifter = false;
+	uint8_t _LEDs = 0;
+	uint16_t _WheelRange = 270;
+	uint8_t _AutoCenterStrength = 0x07;
+	uint8_t _StrengthRisingRate = 0xFF;
+	uint8_t _WheelForce = 0;
+	uint8_t _LeftFriction = 0;
+	uint8_t _RightFriction = 0;
 
 protected:
 
@@ -279,43 +286,90 @@ public:
 	}
 
 	// Untouched data return
+	
 	uint8_t GetHatSwitch() { return _G27_data.HatSwitchData; }
+	
 	uint8_t GetShifterBlackButtons() { return _G27_data.ShifterBlackButtonsData; }
+	
 	uint8_t GetWheelShifters() { return _G27_data.WheelShiftersData; }
+	
 	uint8_t GetWheelButtons() { return _G27_data.WheelButtonsData; }
+	
 	uint8_t GetShifterRedButtons() { return _G27_data.ShifterRedButtonsData; }
+	
 	uint8_t GetShifterGear() { return _G27_data.ShifterGearData; }
+	
 	uint16_t GetWheel() { return _G27_data.WheelData; }
+	
 	uint8_t GetThrottleRaw() { return _G27_data.ThrottleData; }
+	
 	uint8_t GetBrakeRaw() { return _G27_data.BrakeData; }
+	
 	uint8_t GetClutchRaw() { return _G27_data.ClutchData; }
+	
 	uint8_t GetHorizontalShifter() { return _G27_data.HorizontalShifterData; }
+	
 	uint8_t GetVerticalShifter() { return _G27_data.VerticalShifterData; }
+	
 	uint8_t GetVendorDefinedData() { return _G27_data.VendorDefinedData; }
+	
 	// Elaborated data return
+	
 	int16_t GetHatSwitchDegrees() { return _G27_data.HatSwitchData == 8 ? -1 : _G27_data.HatSwitchData*45; }
+	
 	int16_t GetWheelCentered() { return _G27_data.WheelData - 8192; }
+	
 	// GetWheelDegrees?
+	
 	bool UsingManualGearShifter() { return _UsingManualGearShifter; }
+	
 	uint8_t GetThrottle() { return 255 - _G27_data.ThrottleData; }
+	
 	uint8_t GetBrake() { return 255 - _G27_data.BrakeData; }
+	
 	uint8_t GetClutch() { return 255 - _G27_data.ClutchData; }
+	
 	int8_t GetGearNumber() { return _GearNumber; }
+	
+	uint8_t GetLEDs() { return _LEDs; }
+	
+	uint16_t GetWheelRange() { return _WheelRange; }
+	
+	uint8_t GetAutoCenterStrength() { return _AutoCenterStrength; }
+	
+	uint8_t GetStrengthRisingRate() { return _StrengthRisingRate; }
+	
+	uint8_t GetWheelForce() { return _WheelForce; }
+	
+	uint8_t GetWheelLeftFriction() { return _LeftFriction; }
+	
+	uint8_t GetWheelRightFriction() { return _RightFriction; }
+	
+	
 
 	void SetWheelChangeThreshold(uint8_t LSBs) { if(LSBs <14) _WheelChangeThreshold = 0xFFFF << LSBs; }
+	
 	void SetThrottleChangeThreshold(uint8_t LSBs) { if(LSBs <8) _ThrottleChangeThreshold = 0xFF << LSBs; }
+	
 	void SetBrakeChangeThreshold(uint8_t LSBs) { if(LSBs <8) _BrakeChangeThreshold = 0xFF << LSBs; }
+	
 	void SetClutchChangeThreshold(uint8_t LSBs) { if(LSBs <8) _ClutchChangeThreshold = 0xFF << LSBs; }
+	
 	void SetHorizontalShifterChangeThreshold(uint8_t LSBs) { if(LSBs <8) _HorizontalShifterChangeThreshold = 0xFF << LSBs; }
+	
 	void SetVerticalShifterChangeThreshold(uint8_t LSBs) { if(LSBs <8) _VerticalShifterChangeThreshold = 0xFF << LSBs; }
+	
 
 	void SetLEDs(uint8_t LEDs) {
+		_LEDs = LEDs;
 		uint8_t LEDs_cmd[] = {0xf8, 0x12, LEDs, 0x00, 0x00, 0x00, 0x01};
 		_Hid.SndRpt(7, LEDs_cmd);
 		_Usb.Task();
 	}
+	
 	void SetWheelRange(uint16_t Range) {
 		if(Range <= 900 && Range >= 270) {
+			_WheelRange = Range;
 			uint8_t RangeLSB = Range & 0x00FF;
 			uint8_t RangeMSB = (Range & 0xFF00) >> 8;
 			uint8_t SetRangeCmd[] = {0xf8, 0x81, RangeLSB, RangeMSB, 0x00, 0x00, 0x00};
@@ -323,42 +377,57 @@ public:
 			_Usb.Task();
 		}
 	}
+	
 	void SetWheelAutoCenter(int8_t Strength = 0x07, uint8_t StrengthRisingRate = 0xFF) {
-		if(Strength <= 15 && Strength >= -1) {
-			if(Strength == -1) {
-				uint8_t AutoCenterOffCmd[] = {0xf5, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-				_Hid.SndRpt(7, AutoCenterOffCmd);
-				_Usb.Task();
-			}
-			else {
+		_StrengthRisingRate = StrengthRisingRate;
+		if(Strength == -1) {
+			_AutoCenterStrength = -1;
+			uint8_t AutoCenterOffCmd[] = {0xf5, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+			_Hid.SndRpt(7, AutoCenterOffCmd);
+			_Usb.Task();
+		}
+		else if(Strength <= 15) {
+			if(_AutoCenterStrength == -1) {
 				uint8_t AutoCenterOnCmd[] = {0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 				_Hid.SndRpt(7, AutoCenterOnCmd);
 				_Usb.Task();
-				uint8_t AutoCenterStrengthCmd[] = {0xFE, 0x0D, Strength, Strength, StrengthRisingRate, 0x00, 0x00};
-				_Hid.SndRpt(7, AutoCenterStrengthCmd);
-				_Usb.Task();
 			}
+			_AutoCenterStrength = Strength;
+			uint8_t AutoCenterStrengthCmd[] = {0xFE, 0x0D, Strength, Strength, StrengthRisingRate, 0x00, 0x00};
+			_Hid.SndRpt(7, AutoCenterStrengthCmd);
+			_Usb.Task();
 		}
 	}
+	
 	void SetWheelConstantForce(int8_t Force) {
+		_WheelForce = Force;
 		if(Force == -128 || Force == 0) DisableWheelEffects(1);
 		else {
-			uint8_t ConstantForceCmd[] = {0x11, 0x00, 127 -Force, 0x00, 0x00, 0x00, 0x00};
+			uint8_t ConstantForceCmd[] = {0x11, 0x00, 127-Force, 0x00, 0x00, 0x00, 0x00};
 			_Hid.SndRpt(7, ConstantForceCmd);
 			_Usb.Task();
 		}
 	}
+	
 	void SetWheelFriction(uint8_t Friction) {
 		SetWheelFriction(Friction, Friction);
 	}
+	
 	void SetWheelFriction(uint8_t LeftFriction, uint8_t RightFriction) {
-		if(LeftFriction == 0 && RightFriction == 0) DisableWheelEffects(2);
+		if(LeftFriction == 0 && RightFriction == 0) {
+			_LeftFriction = 0;
+			_RightFriction = 0;
+			DisableWheelEffects(2);
+		}
 		else if(LeftFriction <= 15 && RightFriction <= 15) {
+			_LeftFriction = LeftFriction;
+			_RightFriction = RightFriction;
 			uint8_t FrictionCmd[] = {0x21, 0x02, LeftFriction, 0x00, RightFriction, 0x00, 0x00};
 			_Hid.SndRpt(7, FrictionCmd);
 			_Usb.Task();
 		}
 	}
+	
 	void DisableWheelEffects(uint8_t Slot = 0) {
 		if(Slot == 0) Slot = 0xF3;
 		else Slot <<= 4;
