@@ -347,6 +347,8 @@ public:
 	
 	uint8_t GetWheelRightFriction() { return _RightFriction; }
 	
+	uint8_t GetWheelFriction() { return _LeftFriction; }
+	
 	
 
 	void SetWheelChangeThreshold(uint8_t LSBs) { if(LSBs <14) _WheelChangeThreshold = 0xFFFF << LSBs; }

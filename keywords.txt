@@ -38,6 +38,14 @@ SetBrakeChangeThreshold	KEYWORD2
 SetClutchChangeThreshold	KEYWORD2
 SetHorizontalShifterChangeThreshold	KEYWORD2
 SetVerticalShifterChangeThreshold	KEYWORD2
+GetLEDs	KEYWORD2
+GetWheelRange	KEYWORD2
+GetAutoCenterStrength	KEYWORD2
+GetStrengthRisingRate	KEYWORD2
+GetWheelForce	KEYWORD2
+GetWheelLeftFriction	KEYWORD2
+GetWheelRightFriction	KEYWORD2
+GetWheelFriction	KEYWORD2
 SetLEDs	KEYWORD2
 SetWheelRange	KEYWORD2
 SetWheelAutoCenter	KEYWORD2
