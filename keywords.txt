@@ -10,6 +10,7 @@ ArduinoG27events	KEYWORD1
 # methods
 
 Init	KEYWORD2
+Ready	KEYWORD2
 Task	KEYWORD2
 GetHatSwitch	KEYWORD2
 GetShifterBlackButtons	KEYWORD2
