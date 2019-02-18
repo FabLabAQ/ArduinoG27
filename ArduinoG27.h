@@ -23,6 +23,10 @@
 #ifndef ARDUINOG27_H_
 #define ARDUINOG27_H_
 
+#ifndef TASK_FOR
+#define TASK_FOR 16
+#endif
+
 #include <usbhid.h>
 #include <hiduniversal.h>
 #include <usbhub.h>
@@ -187,24 +191,27 @@ public:
 		_Usb.Init();
 		_Hid.SetReportParser(0, this);
 
-		while (!_Hid.isReady()) _Usb.Task();
+		while (!_Hid.isReady()) this->Task(TASK_FOR);
 
 		uint8_t initCmd1[] = {0xf8, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00};
 		_Hid.SndRpt(7, initCmd1);
-		_Usb.Task();
+		this->Task(TASK_FOR);
 
 		uint8_t initCmd2[] = {0xf8, 0x09, 0x04, 0x01, 0x00, 0x00, 0x00};
 		_Hid.SndRpt(7, initCmd2);
-		_Usb.Task();
+		this->Task(TASK_FOR);
 
 		// TODO: find a "cleaner" way to re-enumerate after enabling native mode
 		_Usb.Init();
 
 	}
 	
-	bool Ready() { _Usb.Task(); return (_G27_data.VendorDefinedData & AC_POWER_ON); }
+	bool Ready() { this->Task(TASK_FOR); return (_G27_data.VendorDefinedData & AC_POWER_ON); }
 
-	void Task() { _Usb.Task(); }
+	void Task(uint32_t milliseconds = 0) {
+            uint32_t start = millis();
+            while(millis() <= start + milliseconds) _Usb.Task();
+        }
 
 	void Parse(USBHID *hid, bool is_rpt_id, uint8_t len, uint8_t *buf) {
 		G27_raw_data_t* RawData = (G27_raw_data_t*)buf;
@@ -365,10 +372,12 @@ public:
 	
 
 	void SetLEDs(uint8_t LEDs) {
-		_LEDs = LEDs;
-		uint8_t LEDs_cmd[] = {0xf8, 0x12, LEDs, 0x00, 0x00, 0x00, 0x01};
-		_Hid.SndRpt(7, LEDs_cmd);
-		_Usb.Task();
+                if(LEDs != _LEDs) {
+                    _LEDs = LEDs;
+                    uint8_t LEDs_cmd[] = {0xf8, 0x12, LEDs, 0x00, 0x00, 0x00, 0x01};
+                    _Hid.SndRpt(7, LEDs_cmd);
+                    this->Task(TASK_FOR);
+                }
 	}
 	
 	void SetWheelRange(uint16_t Range) {
@@ -378,7 +387,7 @@ public:
 			uint8_t RangeMSB = (Range & 0xFF00) >> 8;
 			uint8_t SetRangeCmd[] = {0xf8, 0x81, RangeLSB, RangeMSB, 0x00, 0x00, 0x00};
 			_Hid.SndRpt(7, SetRangeCmd);
-			_Usb.Task();
+			this->Task(TASK_FOR);
 		}
 	}
 	
@@ -388,18 +397,18 @@ public:
 			_AutoCenterStrength = -1;
 			uint8_t AutoCenterOffCmd[] = {0xf5, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 			_Hid.SndRpt(7, AutoCenterOffCmd);
-			_Usb.Task();
+			this->Task(TASK_FOR);
 		}
 		else if(Strength <= 15) {
 			if(_AutoCenterStrength == -1) {
 				uint8_t AutoCenterOnCmd[] = {0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 				_Hid.SndRpt(7, AutoCenterOnCmd);
-				_Usb.Task();
+				this->Task(TASK_FOR);
 			}
 			_AutoCenterStrength = Strength;
 			uint8_t AutoCenterStrengthCmd[] = {0xFE, 0x0D, Strength, Strength, StrengthRisingRate, 0x00, 0x00};
 			_Hid.SndRpt(7, AutoCenterStrengthCmd);
-			_Usb.Task();
+			this->Task(TASK_FOR);
 		}
 	}
 	
@@ -409,7 +418,7 @@ public:
 		else {
 			uint8_t ConstantForceCmd[] = {0x11, 0x00, 127-Force, 0x00, 0x00, 0x00, 0x00};
 			_Hid.SndRpt(7, ConstantForceCmd);
-			_Usb.Task();
+			this->Task(TASK_FOR);
 		}
 	}
 	
@@ -428,7 +437,7 @@ public:
 			_RightFriction = RightFriction;
 			uint8_t FrictionCmd[] = {0x21, 0x02, LeftFriction, 0x00, RightFriction, 0x00, 0x00};
 			_Hid.SndRpt(7, FrictionCmd);
-			_Usb.Task();
+			this->Task(TASK_FOR);
 		}
 	}
 	
@@ -437,7 +446,7 @@ public:
 		else Slot <<= 4;
 		uint8_t EffectsDisableCmd[] = {Slot, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 		_Hid.SndRpt(7, EffectsDisableCmd);
-		_Usb.Task();
+		this->Task(TASK_FOR);
 	}
 
 };
